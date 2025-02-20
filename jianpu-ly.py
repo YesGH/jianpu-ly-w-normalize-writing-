@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 # (can be run with either Python 2 or Python 3)
-## (the note and its attachment can put together not separated by space, the block begin and end should be one blank line.  
-## ( the duration can enter also like: 1--- 1-- 1- 1 1/8/16/32/64th ->  1--- 1-- 1- 1 1q 1s 1d 1h  or,  1--- 1-- 1- 1 1\ 1\\ 1\\\ 1\\\\ )  (v1828T4)
+## pre-process file to old format and remain the LP blocks.(v1.838.1)
+
 r"""
 # Jianpu (numbered musical notaion) for Lilypond
-# v1.828 (c) 2012-2025 Silas S. Brown
+# v1.838 (c) 2012-2025 Silas S. Brown
 # v1.826 (c) 2024 Unbored
 
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,8 +27,9 @@ r"""
 # and in China: https://gitee.com/ssb22/jianpu-ly
 
 # (The following docstring format is fixed, see --html)
-Run jianpu-ly < text-file > ly-file (or jianpu-ly text-files > ly-file).  There is experimental support for importing MusicXML (.mxl) instead of jianpu-ly's text input format, but this does not work for all pieces.
-Normal text files are whitespace-separated and can contain:
+Run jianpu-ly < text-file > ly-file (or jianpu-ly text-files > ly-file).  There is experimental support for importing MusicXML via jianpu-ly piece.xml (or jianpu-ly piece.mxl > ly-file) but this does not work for all pieces.
+# (Currently, MusicXML import must use .mxl extension and not redirect)
+Normal text files are whitespace-separated and can contain words like the following.  Usually the order of characters within a note does not matter, hence #1 is the same as 1# and '1 is the same as 1' and s1 is the same as 1s.
 Scale going up: 1 2 3 4 5 6 7 1'
 Accidentals: 1 #1 2 b2 1
 Octaves: 1,, 1, 1 1' 1''
@@ -36,6 +37,8 @@ Shortcuts for 1' and 2': 8 9
 Percussion beat: x
 Change base octave: < >
 Semiquaver, quaver, crotchet (16/8/4th notes): s1 q1 1
+Alternate way to input semiquaver, quaver, crotchet: 1\\ 1\ 1 (any \ must go after the pitch not before)
+Sticky durations (4 semiquavers then crotchet): KeepLength s1 1 1 1 c1
 Dotted versions of the above (50% longer): s1. q1. 1.
 Demisemiquaver, hemidemisemiquaver (32/64th notes): d1 h1
 Minims (half notes) use dashes: 1 -
@@ -46,12 +49,12 @@ Time signature with quaver anacrusis (8th-note pickup): 4/4,8
 Key signature (major): 1=Bb
 Key signature (minor): 6=F#
 Tempo: 4=85
-Lyrics: L: here are the syl- la- bles (all on one line)
+Lyrics: L: here are the syl- la- bles (all on one line, or newline after the : and double newline to end)
 Lyrics (verse 1): L: 1. Here is verse one
 Lyrics (verse 2): L: 2. Here is verse two
 Hanzi lyrics (auto space): H: hanzi (with or without spaces)
 Lilypond headers: title=the title (on a line of its own)
-Guitar chords: chords=c2. g:7 c (on own line)
+Guitar chords: chords=c2. g:7 c (on own line, or newline after the = and double newline to end)
 Fret diagrams: frets=guitar (on own line)
 Multiple parts: NextPart
 Instrument of current part: instrument=Flute (on a line of its own)
@@ -62,6 +65,7 @@ Suppress first-line indent: NoIndent
 Ragged last line: RaggedLast
 Old-style time signature: SeparateTimesig 1=C 4/4
 Indonesian 'not angka' style: angka
+Alternate Indonesian-style minim, dotted minim and semibreve: 1 . 1 . . 1 . . . (dot is treated as dash)
 Add a Western staff doubling the tune: WithStaff
 Tuplets: 3[ q1 q1 q1 ]
 Grace notes before: g[#45] 1
@@ -84,6 +88,7 @@ Text: ^"above note" _"below note"
 Harmonic symbols above main notes: Harm: (music) :Harm (main music)
 Other Lilypond code: LP: (block of code) :LP (each delimeter at start of its line)
 Unicode approximation instead of Lilypond: Unicode
+Split MIDI files per part: PartMidi
 Ignored: % a comment
 """
 
@@ -630,6 +635,7 @@ class NoteheadMarkup:
       self.inBeamGroup = self.lastNBeams = self.onePage = self.noBarNums = self.noIndent = self.raggedLast = self.separateTimesig = self.withStaff = 0
       self.keepLength = 0
       self.last_octave = self.base_octave = ""
+      self.octavesSeen = []
       self.current_accidentals = {} # used to predict whether Lilypond will draw the accidental or not, for beam spacing purposes
       self.barNo = 1
       self.tuplet = (1,1)
@@ -696,7 +702,7 @@ class NoteheadMarkup:
         if self.current_chord: # a chord is currently in progress, and we're extending it with a tie
             isChord = True
             chord_ret,octave,placeholder_chord = chordNotes_markup(re.sub('[qsdh.]','',self.current_chord))
-            if not midi and not western: placeholder_chord = "c"
+            if not midi and not western: placeholder_chord = placeholder_chord[:-1].split()[-1] # just have one note of it for dashes
         else: # not a chord, so we can assume len(self.last_figures)==1
             placeholder_chord = placeholders[self.last_figures]
             octave = self.last_octave # for MIDI or 5-line
@@ -705,6 +711,7 @@ class NoteheadMarkup:
         if not isChord: octave=addOctaves(octave,self.base_octave)
         if not octave in [",,,",",,",",","","'","''","'''"]: scoreError("Can't handle octave "+octave+" in",word,line)
         self.last_octave = octave
+        self.octavesSeen.append({",,,":-3,",,":-2,",":-1,"":0,"'":1,"''":2,"'''":3}[octave]) # for figuring out the best clef with WithStaff
         self.last_tremolo = tremolo
         if isChord: self.current_chord = word
         else: self.current_chord = None
@@ -792,7 +799,7 @@ class NoteheadMarkup:
     elif not isChord or figures.startswith("-"): # single note or rest
         ret += placeholder_chord
         if midi or western or not not_angka: ret += {"":"", "#":"is", "b":"es"}[accidental]
-        if not placeholder_chord=="r": ret += {"":"'","'":"''","''":"'''","'''":"''''",",":"",",,":",",",,,":",,"}[octave] # for MIDI + Western, put it so no-mark starts near middle C
+        if (midi or western) and not placeholder_chord=="r": ret += {"":"'","'":"''","''":"'''","'''":"''''",",":"",",,":",",",,,":",,"}[octave] # so no-mark starts near middle C
         if add_cautionary_accidental: ret += "!"
     ret += ("%d" % length) + dots
     if self.rplacNextIfStillInBeam: self.rplacNextIfStillInBeam += ("r%d" % length) + dots + '['
@@ -873,34 +880,31 @@ class NoteheadMarkup:
         self.unicode_approx[-1]=self.unicode_approx[-1].rstrip()+u'\u2502'
         self.barPos = 0 ; self.barNo += 1
         self.current_accidentals = {}
+    b4last,aftrlast = "",""
     if invisTieLast:
         if midi or western:
-            b4last, aftrlast = "", " ~"
-            if tremolo and placeholder_chord.startswith("<"):
-                aftrlast = "" # can't tie this kind of tremolo as of Lilypond 2.24 (get warning: Unattached TieEvent)
-        # elif not figures=='-': 
-        #     b4last,aftrlast = r"\once \override Tie #'transparent = ##t \once \override Tie #'staff-position = #0 "," ~"
-        else:
-            b4last, aftrlast = "", ""
-    else: b4last,aftrlast = "",""
+            if not (tremolo and placeholder_chord.startswith("<")): aftrlast = " ~"
+        elif not tremolo:
+            # For attaching lyrics to long notes:
+            b4last,aftrlast = r"\once \override Tie #'transparent = ##t \once \override Tie #'staff-position = #0 "," ~"
     if figures=="x" and western: ret = r"\once \override NoteHead.style = #'cross \once \override NoteHead.no-ledgers = ##t " + ret
     if inRestHack: ret += " } " # end temporary voice for the "-" (non)-note
     elif tieEnd: ret += ' '+tieEnd # end of JianpuTie curve
     return aftrLastNonDash,figures=='-',b4last,replaceLast,aftrlast0+aftrlast,ret, need_space_for_accidental, nBeams,octave
 
 def parseNote(word,origWord,line):
-    if word==".": word = "-" # (for not angka, TODO: document that this is now acceptable as an input word?)
+    if word==".": word = "-"
     word = word.replace("8","1'").replace("9","2'")
     if type(u"")==type(""): word = word.replace(u"\u2019","'")
     else: word=word.replace(u"\u2019".encode('utf-8'),"'")
     if "///" in word: tremolo,word=":32",word.replace("///","",1)
     else: tremolo = ""
-    if not re.match(r"[0-7x.,'cqsdh\\#b-]+$",word): # unrecognised stuff in it: flag as error, rather than ignoring and possibly getting a puzzling barsync fail
+    if not re.match(note_regex+"$",word): # unrecognised stuff in it: flag as error, rather than ignoring and possibly getting a puzzling barsync fail
         scoreError("Unrecognised command",origWord,line)
     figures = ''.join(re.findall('[01234567x-]',word))
     dots = "".join(c for c in word if c==".")
     nBeams = ''.join(re.findall(r'[cqsdh\\]',word))
-    if re.match(r"[\\]+$",nBeams): nBeams=len(nBeams) # requested by a user who found British note-length names hard to remember; won't work if the \ is placed at the start, as that'll be a Lilypond command, so to save confusion we won't put this in the docstring
+    if re.match(r"[\\]+$",nBeams): nBeams=len(nBeams) # requested by a user who found British note-length names hard to remember; won't work if the \ is placed at the start, as that'll be a Lilypond command
     elif nBeams:
         try: nBeams = list("cqsdh").index(nBeams)
         except ValueError: scoreError("Can't calculate number of beams from "+nBeams+" in",origWord,line)
@@ -948,7 +952,13 @@ def write_docs():
 def getInput0():
   inDat = []
   for f in sys.argv[1:]:
-    if f.endswith(".mxl"): inDat.append(re.sub(r"<[?]xml.*?/container>\s*","",getoutput("unzip -qc "+quote(f)).replace("application/vnd.recordare.musicxml","").strip(),flags=re.DOTALL))
+    if f.endswith(".mxl"):
+        import zipfile ; z=zipfile.ZipFile(f)
+        for F in z.infolist():
+            if not F.filename in ["mimetype","META-INF/","META-INF/container.xml"]:
+                b = z.read(F)
+                if type("")==type(u""): b=b.decode('utf-8')
+                inDat.append(b)
     else:
       try:
         try: inDat.append(open(f,encoding="utf-8").read()) # Python 3: try UTF-8 first
@@ -978,7 +988,7 @@ def write_version():
 
 def get_input():
   inDat = getInput0()
-  for i in range(len(inDat)):
+  for i in xrange(len(inDat)):
     if inDat[i].startswith('\xef\xbb\xbf'):
       inDat[i] = inDat[i][3:]
     if inDat[i].startswith(r'\version'): errExit("jianpu-ly does not READ Lilypond code.\nPlease see the instructions.")
@@ -986,23 +996,43 @@ def get_input():
         inDat[i] = xml2jianpu(inDat[i])
   return " NextScore ".join(inDat)
 
-def merge_lines(score): ##score pre-process
+def process_text(line): ## remain LP block, add space after note
+    placeholder = "TEMP_P{}"
+    placeholder_index = 0
+    lp_sections = []
+
+    def replace_lp(match):
+        nonlocal placeholder_index
+        lp_sections.append(match.group(0)) #remain the sign LP
+        result = placeholder.format(placeholder_index)
+        placeholder_index += 1
+        return result
+    line = re.sub(r"LP:.*?:LP", replace_lp, line)
+    line = re.sub(r"([0-9x.,'cqsdh\\#b-]+)([()][()]\s|[_^][^\s])", r"\1 \2", line)  ## add space
+    line = re.sub(r"([0-9x.,'cqsdh()\\#b-]+)([()~]\s|[\\][A-Za-z])", r"\1 \2", line)
+    for i, lp_section in enumerate(lp_sections):
+       line = line.replace(placeholder.format(i), lp_section) ## LP back
+    return line
+
+def merge_lines(score): ##de-comment%
     lines = score.splitlines()
     processed_lines = []
     for line in lines:
         index = line.find('%')
         if index != -1:
-            line = line[:index ] #de-comment
+            line = line[:index]
         line = line.strip()
         if line:
             processed_lines.append(line)
-    result = ' '.join(processed_lines) #link by a space
-    result = re.sub(r"([0-9x.,'cqsdh\\#b-]+)([()~]\s|[_^\\][0-9A-Za-z\']|[_^][\\])", r"\1 \2", result)  ##add space after note
+            print(line)
+    line  = ' '.join(processed_lines)
+    result = process_text(line) ##
     return result
-    
-def pre_process_input(f): ## T4
+
+def pre_process_input(f):
     lines = f.split('\n\n')
     result = []
+#    print(lines)
     for line in lines:
         if line.startswith('M:'):
             line = line[2:] 
@@ -1012,39 +1042,54 @@ def pre_process_input(f): ## T4
         else:
             line = line
         result.append(line)     
+                
     f = '\n\n'.join(result)
     return f 
-    
 
 def xml2jianpu(x):
     from xml.parsers.expat import ParserCreate
     xmlparser = ParserCreate()
-    ret = [] ; dat = ["",""]
+    mxlPosition,positionsInProgress,partsInProgress = [0,0],[0],[[]]
+    paddingRestList, paddingRestDict = [], {0:0}
+    ret = [] ; dat = ["",{}]
     partList=[""];time=["4","4"];tempo=["",""]
     note=[[""]*11];keySig=[['']*7];barSig=[['']*7,None];note1=["C"]
-    tSig=[None,0];prevChord=[None]
+    tSig=[None,0];prevChord=[None,None]
     types={"64th":"h","32nd":"d","16th":"s","eighth":"q","quarter":"","half":" -","whole":" - - -"}
     typesDot={"64th":"h.","32nd":"d.","16th":"s.","eighth":"q.","quarter":".","half":" - -","whole":" - - - - -"}
     typesMM={"64th":"64","32nd":"32","16th":"16","eighth":"8","quarter":"4","half":"2","whole":"1"}
     quavers={"64th":0.125,"32nd":0.25,"16th":0.5,"eighth":1,"quarter":2,"half":4,"whole":8}
     def s(name,attrs):
-        dat[0],dat[1]="",attrs.get("type","")
+        dat[0],dat[1]="",attrs
         if name=="measure":
             oldBarsig = barSig[0]
-            barSig[0] = keySig[0].copy()
+            barSig[0] = keySig[0][:]
             if barSig[1] is not None: barSig[0][barSig[1]]=oldBarsig[barSig[1]] # for tie
     def c(data): dat[0] += data
     def e(name):
         d0 = dat[0].strip()
-        if name in ['work-title','movement-title']: ret.append('title='+d0)
-        elif name=='creator' and dat[1]=="composer": ret.append('composer='+d0)
+        if name in ['work-title','movement-title'] or name=='credit-words' and dat[1].get("justify","")=="center":
+            if not(any(r.startswith("title=") for r in ret)):
+                ret.append('title='+d0.replace("\n"," "))
+        elif name=='creator' and dat[1].get("type","")=="composer" or name=='credit-words' and dat[1].get("justify","")=="right":
+            if not(any(r.startswith("composer=") for r in ret)):
+                ret.append('composer='+d0.replace("\n"," "))
         elif name=="part-name" or name=="instrument-name": partList[-1]=d0
         elif name=="score-part": partList.append("")
         elif name=="part": # we're assuming score-partwise
-            if partList:
-                ret.append('instrument='+partList[0])
-                del partList[0]
-            ret.append("WithStaff NextPart")
+            for n,p in enumerate(partsInProgress):
+                if partList: ret.append('instrument='+partList[0])
+                if positionsInProgress[n] < max(positionsInProgress) and positionsInProgress[n] in paddingRestDict: p.append(' '.join(paddingRestList[paddingRestDict[positionsInProgress[n]]:]))
+                else: os.environ["j2ly_sloppy_bars"] = "1"
+                ret.append("\n".join(p))
+                ret.append("WithStaff NextPart")
+            del partsInProgress[:] ; del positionsInProgress[:]
+            positionsInProgress.append(0);partsInProgress.append([])
+            mxlPosition[0]=mxlPosition[1]=0 ; del paddingRestList[:]
+            for k in list(paddingRestDict.keys()):
+                del paddingRestDict[k]
+            paddingRestDict[0] = 0
+            if partList: del partList[0]
         elif name=="fifths":
             keySig[0]=['']*7
             if d0.startswith('-'): keyAcc,start,inc='b',4-1,4 # Bb (b)4
@@ -1052,24 +1097,49 @@ def xml2jianpu(x):
             for i in range(abs(int(d0))):
                 keySig[0][start] = keyAcc
                 start = (start+inc) % 7
-            barSig[0] = keySig[0].copy()
+            barSig[0] = keySig[0][:]
             key = ["Gb","Db","Ab","Eb","Bb","F","C","G","D","A","E","B","F#"][int(d0)+6]
             note1[0]=key[0]
-            ret.append("1="+key)
+            paddingRestList.append("1="+key)
+            for k,v in list(paddingRestDict.items()):
+                if v==len(paddingRestList)-1: paddingRestDict[k] += 1
+            for n,p in enumerate(partsInProgress):
+                if positionsInProgress[n]==max(positionsInProgress):
+                    p.append("1="+key)
         elif name=="beats": time[0]=d0
         elif name=="beat-type": time[1]=d0
         elif name=="time":
-            tSig[0] = len(ret) # so anacrusis logic can come back and add to this
+            tSig[0] = [len(paddingRestList)] # so anacrusis logic can come back and add to this
             tSig[1] = 0 # count quavers in 1st bar
-            ret.append("/".join(time))
-        elif name=="backup" or name=="forward": errExit("MusicXML import: multiple voices per part not implemented")
+            paddingRestList.append("/".join(time))
+            for k,v in list(paddingRestDict.items()):
+                if v==len(paddingRestList)-1: paddingRestDict[k] += 1
+            for n,p in enumerate(partsInProgress):
+                if positionsInProgress[n]==max(positionsInProgress):
+                    tSig[0].append(len(p))
+                    p.append("/".join(time))
+                else: tSig[0].append(None) # and hope anacrusis is fixed in paddingRestList before time signature gets copied to this part (TODO in theory this might not happen with all MusicXML generators)
+        elif name=="duration": mxlPosition[1] = int(dat[0].strip()) # last duration (could be inside note or backup,forward: handle when close)
+        elif name=="backup":
+            mxlPosition[0] -= mxlPosition[1]
+            mxlPosition[1] = 0
+        elif name=="forward":
+            mxlPosition[0] += mxlPosition[1]
+            mxlPosition[1] = 0
         elif name=="measure" and not tSig[0]==None:
-            if not tSig[1]==int(time[0])*8/int(time[1]): ret[tSig[0]]+=","+{0.5:"16",0.75:"16.",1:"8",1.5:"8.",2:"4",3:"4.",4:"2",6:"2.",8:"1",12:"1."}[tSig[1]] # anacrusis
+            if not tSig[1]==int(time[0])*8/int(time[1]):
+                a = ","+{0.5:"16",0.75:"16.",1:"8",1.5:"8.",2:"4",3:"4.",4:"2",6:"2.",8:"1",12:"1."}[tSig[1]] # anacrusis
+                paddingRestList[tSig[0][0]] += a
+                for n,p in enumerate(tSig[0][1:]):
+                    if not p is None: partsInProgress[n][p]+=a
             tSig[0]=None
         elif name=="beat-unit": tempo[0]=typesMM.get(name,"4")
         elif name=="beat-minute" or name=="per-minute": tempo[1]=d0
         elif name=="metronome":
-            if tempo[0] and tempo[1]: ret.append("=".join(tempo))
+            if tempo[0] and tempo[1]:
+                for n,p in enumerate(partsInProgress):
+                    if positionsInProgress[n]==max(positionsInProgress):
+                        p.append("=".join(tempo)) ; break
             tempo[0]=tempo[1]="" # for now we ignore <metronome> elements that don't specify all parameters
         elif name=="step": note[0][0]=d0
         elif name=="rest": note[0][0]="r"
@@ -1077,10 +1147,10 @@ def xml2jianpu(x):
         elif name=="accidental": note[0][2]=d0
         elif name=="type": note[0][3]=d0
         elif name=="dot": note[0][4]=1
-        elif name=="slur": note[0][5]+={"start":" (","stop":" )"}[dat[1]]
-        elif name=="tie": note[0][6]={"start":"~","stop":""}[dat[1]]
+        elif name=="slur": note[0][5]+={"start":" (","stop":" )"}[dat[1].get("type","")]
+        elif name=="tie": note[0][6]={"start":"~","stop":""}[dat[1].get("type","")]
         elif name=="actual-notes": note[0][7]=d0
-        elif name=="tuplet": note[0][8]=dat[1]
+        elif name=="tuplet": note[0][8]=dat[1].get("type","")
         elif name=="chord": note[0][9]=True
         elif name=="grace": note[0][10]=True
         elif name=="fermata": note[0][5]    += r" \fermata"
@@ -1089,7 +1159,30 @@ def xml2jianpu(x):
         elif name=="accent": note[0][5]     += r" \accent"
         elif name=="trill-mark": note[0][5] += r" \trill"
         elif name=="mordent": note[0][5]    += r" \mordent"
+        elif name in "ppppp pppp ppp pp p mp mf f ff fff ffff fffff fp sf sfz n rfz".split(): note[0][5] += " \\"+name
+        elif name=="words":
+            toAdd = r' ^"'+dat[0].strip().replace('"',"'")+'"'
+            if not toAdd in note[0][5]: note[0][5] += toAdd
         elif name=="note":
+            # Try to find which voice it goes onto, if we're MuseScore
+            # or similar and have parts as voices within a part.
+            # TODO: sometimes the XML will give us a voice or staff number; for now we just find the first one to fit
+            ourRet = ourI = None
+            for i,p in enumerate(positionsInProgress):
+                if p == mxlPosition[0]: # exact match
+                    ourRet,ourI = partsInProgress[i],i ; break
+            if ourRet is None:
+                for i,p in enumerate(positionsInProgress):
+                    if p < mxlPosition[0] and p in paddingRestDict: # match but need padding
+                        ourRet,ourI = partsInProgress[i],i
+                        ourRet.append(' '.join(paddingRestList[paddingRestDict[p]:paddingRestDict[mxlPosition[0]]])) # TODO: collapse to whole-bar rests when needed (low priority because this should not happen often)
+                        positionsInProgress[i] = mxlPosition[0]
+                        break
+            if ourRet is None: # need new part
+                partsInProgress.append(paddingRestList[:paddingRestDict[mxlPosition[0]]]) # TODO: collapse to whole-bar rests when needed (as above)
+                positionsInProgress.append(mxlPosition[0])
+                ourRet,ourI = partsInProgress[-1],len(partsInProgress)-1
+            # Now OK to add the note to the part (voice)
             step,octave,acc,nType,dot,extras,tie,tuplet,tState,chord,grace = note[0]
             note[0]=[""]*11
             if step=="r": r="0"
@@ -1106,8 +1199,12 @@ def xml2jianpu(x):
                 if keySig[0][dTone%7]=="#": acc="" if acc=="#" else "b"
                 if keySig[0][dTone%7]=="b": acc="" if acc=="b" else "#"
             if chord:
-                ret[prevChord[0]] += r ; return
-            if tState=="start": ret.append(tuplet+"[")
+                rr = prevChord[1][prevChord[0]]
+                prevChord[1][prevChord[0]] = rr.split()[0]+r+''.join([' '+x for x in rr.split()[1:]])
+                return
+            if tState=="start":
+                ourRet.append(tuplet+"[")
+                if ourI==0: paddingRestList.append(tuplet+"[")
             if not nType:
                 wantQ = int(time[0])*8/int(time[1])
                 nn = [k for k,v in quavers.items() if v==wantQ]
@@ -1116,22 +1213,32 @@ def xml2jianpu(x):
                     nn = [k for k,v in quavers.items() if v*1.5==wantQ]
                     if nn: nType,dot = nn[0],1
                     else: assert 0, "Full-measure note or rest at unrecognised bar length" # will probably need to split
-            if not tSig[0]==None: # we're counting the length of the first bar, for anacrusis
+            if not tSig[0]==None and ourI==0: # we're counting the length of the first bar, for anacrusis
                 tSig[1] += quavers[nType]
                 if dot: tSig[1] += quavers[nType]/2.0
             if dot: d=typesDot
             else: d = types
             r += acc+d[nType]+' '
-            prevChord[0]=len(ret)
+            if ourI==0: paddingRestList.append("0"+d[nType]) # we hope the subsequent voices are not cross-rhythm with the first voice, at least not at points where <backup> and <forward> occur
+            prevChord[0],prevChord[1]=len(ourRet),ourRet
             w1,w2 = r[:r.index(' ')],r[r.index(' '):]
             if grace: w1="g["+w1+"]"
-            ret.append(w1+extras+' '+w2+' '+tie)
-            if tState=="stop": ret.append("]")
+            ourRet.append(w1+extras+' '+w2+' '+tie)
+            if tState=="stop":
+                ourRet.append("]")
+                if ourI==0: paddingRestList.append("]")
+            mxlPosition[0] += mxlPosition[1]
+            positionsInProgress[ourI] = mxlPosition[0]
+            mxlPosition[1] = 0
+            if ourI==0:
+                paddingRestDict[mxlPosition[0]] = len(paddingRestList)
     xmlparser.StartElementHandler = s
     xmlparser.CharacterDataHandler = c
     xmlparser.EndElementHandler = e
     xmlparser.Parse(x,True)
-    return '\n'.join(ret)
+    ret = '\n'.join(ret)
+    if not type("")==type(ret): ret=ret.encode('utf-8') # Python 2
+    return ret
 
 def fix_utf8(stream,mode):
     if type("")==type(u""): # Python 3: please use UTF-8 for Lilypond, even if the system locale says something else
@@ -1337,6 +1444,14 @@ def chordNotes_markup(notes):
     ret += ">"
     return ret,bottom_octave,placeholder_chord
 
+note_regex = (
+    # Define a note regex as precisely as we can, as different from Lilypond commands etc.
+    # Optionally before the figure:
+    r"(?:[.,'cqsdh#b]" + # non-\ note attribute
+    r"[.,'cqsdh\\#b]*)?" + # and possibly other note attributes that can include \ (just not as the first character).
+    r"[0-9x-]" + # At least one figure (or rest or continuation)
+    r"[0-9x.,'cqsdh\\#b-]*") # and other figures or attrs after
+
 def getLY(score,headers=None,have_final_barline=True):
    if not headers: headers = {} # Python 2 persists this dict if it's in the default args
    lyrics = []
@@ -1350,9 +1465,12 @@ def getLY(score,headers=None,have_final_barline=True):
    aftrnext = defined_jianpuGrace = defined_JGR = None
    aftrnext2 = None
    isInHarmonic = False
-   score=re.sub(r"(?<=\s)(g\[[#b',1-9qsdh]+\]\s*)+g\[([#b',1-9qsdh]+)\](?=\s)",lambda m:re.sub(r"\]\s*g\[","",m.group()),score) # merge multiple grace groups
-
-
+   # Please be careful adding extra re.sub's here: they will apply
+   # to the WHOLE SCORE, including Lilypond blocks, headers, etc.
+   # See comment below for a place where you can add re.sub's that
+   # apply just to the jianpu parts after we've already dealt with
+   # Lilypond blocks, headers and lyrics.
+   score = re.sub("(?s)(^|\n)(L:|H:|chords=)\n(.*?)(\n\n|$)",lambda m:"\n"+" ".join(m.group().split())+"\n",score) # this one DOES apply to lyrics etc: if newline immediately after, collapse until next double newline
    for line in score.split("\n"):
     line = fix_fullwidth(line).strip()
     line=re.sub(r"^%%\s*tempo:\s*(\S+)\s*$",r"\1",line) # to provide an upgrade path for jihuan-tian's fork
@@ -1372,7 +1490,7 @@ def getLY(score,headers=None,have_final_barline=True):
         do_hanzi_spacing = line.startswith("H:")
         line = line[2:].strip()
         toAdd = ""
-        if line and '1' <= line[0] <= '9' and (line[1]=='.' or asUnicode(line)[1]==u"\uff0e"):  ##just the line is not blank and lyrics begine with 1.-9.  
+        if line and '1' <= line[0] <= '9' and (line[1]=='.' or asUnicode(line)[1]==u"\uff0e"):
             # a verse number
             toAdd = r'\set stanza = #"%s." ' % line[:1]
             if line[1]=='.': line=line[2:]
@@ -1385,8 +1503,8 @@ def getLY(score,headers=None,have_final_barline=True):
                 l2.append(toAdd) ; toAdd = ""
             needSpace = 0
             for c in list(asUnicode(line)):
-                is_hanzi = (0x3400 <= ord(c) < 0xa700) # TODO: also cover those outside the BMP?  but beware narrow Python builds ## 㐀 ꜀
-                is_openquote = c in u"\u2018\u201c\u300A" ## ‘“《 
+                is_hanzi = (0x3400 <= ord(c) < 0xa700) # TODO: also cover those outside the BMP?  but beware narrow Python builds
+                is_openquote = c in u"\u2018\u201c\u300A"
                 if needSpace and (is_hanzi or is_openquote):
                     l2.append(' ') ; needSpace = 0
                     if is_openquote: # hang left
@@ -1407,7 +1525,33 @@ def getLY(score,headers=None,have_final_barline=True):
             errExit("Changing header '%s' from '%s' to '%s' (is there a missing %s?)" % (hName,headers[hName],hValue,missing))
         headers[hName] = hValue
     else:
-        line=re.sub('(?<= )[_^]"[^" ]* [^"]*"(?= |$)',lambda m:m.group().replace(' ',chr(0))," "+line)[1:] # multi-word text above/below stave
+        # If we get HERE, we know we're not in a Lilypond header, a
+        # lyrics line, or Lilypond code.  This is a good place to
+        # put any regex replacements we want to apply only to the
+        # jianpu parts of the input before we split into words.
+        # First, merge multiple grace notes.  This is needed for the
+        # output of some MusicXML conversions, and might be useful to
+        # have around anyway:
+        line=re.sub(r"(?<=\s)(g\[[#b',1-9qsdh]+\]\s*)+g\[([#b',1-9qsdh]+)\](?=\s)",lambda m:re.sub(r"\]\s*g\[","",m.group()),line)
+        # To support multi-word text above/below the stave, we'll
+        # replace space with chr(0) inside quoted strings so they
+        # end up being one word per item (we'll put it back to space
+        # before giving it to Lilypond)
+        line=re.sub('(?<= )[_^]"[^" ]* [^"]*"(?= |$)',lambda m:m.group().replace(' ',chr(0))," "+line)[1:]
+        # and YesGH's suggestion: allow slurs and ties to be attached
+        # to the right-hand side of the notes to which they apply
+        # (i.e. auto insert the space if there's not one already).
+        # Not yet doing this with \ Lilypond commands, because
+        # currently \ can indicate a duration if used anywhere other
+        # than the first character of a note, so it could be quite
+        # tricky to identify exactly when we can definitely say it's
+        # a Lilypond command and not a duration (but if your
+        # particular input doesn't use \ for duration then you could
+        # do the replacement in another tool before jianpu-ly).
+        # So currently you still need a space before \command, but
+        # don't need a space before ( or ) or ~ after the note
+        # (and more than one of these can be added to the same note)
+        line=re.sub(r"((?:^|\s)"+note_regex+r")([()~]+)(?=\s|$)", lambda m:" ".join([m.group(1)]+list(m.group(2))), line)
         for word in line.split():
             word=word.replace(chr(0)," ")
             if word in ["souyin","harmonic","up","down","bend","tilde"]: word="Fr="+word # (Fr= before these is optional)
@@ -1425,7 +1569,7 @@ def getLY(score,headers=None,have_final_barline=True):
                 # Must use \transpose because \transposition doesn't always work.
                 # However, don't use \transpose if printing - it adds extra accidentals to the rhythm staff.
                 # So we have to do separate runs of \layout and \midi (hence the outer loop).
-                notehead_markup.unicode_approx.append(u''+re.sub('(?<!=)b$',u'\u266d',word.replace('#',u'\u266f')).upper()+u' ') ## ♭♯
+                notehead_markup.unicode_approx.append(u''+re.sub('(?<!=)b$',u'\u266d',word.replace('#',u'\u266f')).upper()+u' ')
                 if midi or western:
                     if inTranspose: out.append('}')
                     if word[0]=="6": transposeFrom = "a"
@@ -1438,10 +1582,10 @@ def getLY(score,headers=None,have_final_barline=True):
             elif word.startswith("Fr="):
               finger = word.split("=")[1]
               finger = {
-                  "0": u"\u5b80",   ##宀
-                  "1": u"\u4e00", "2": u"\u4e8c", ## 一二
-                  "3": u"\u4e09", "4": u"\u56db",  ## 三四
-                  "souyin": u"\u4e45", # jiu3 久 
+                  "0": u"\u5b80",
+                  "1": u"\u4e00", "2": u"\u4e8c",
+                  "3": u"\u4e09", "4": u"\u56db",
+                  "souyin": u"\u4e45", # jiu3
                   "harmonic": u"\u25cb", # white circle: TODO: can we use Lilypond's ^\flageolet command (not in a \finger{}) which doesn't require a font with 25CB in it? or would that get wrong size? (can be tweaked)
                   "up": u"\u2197", # NE arrow
                   "down": u"\u2198", # SE arrow
@@ -1473,7 +1617,7 @@ def getLY(score,headers=None,have_final_barline=True):
                 if notehead_markup.onePage: sys.stderr.write("WARNING: Duplicate OnePage, did you miss out a NextScore?\n")
                 notehead_markup.onePage=1
             elif word=="KeepOctave": pass # undocumented option removed in 1.7, no effect
-            elif word=="KeepLength": # TODO: document this.  If this is on, you have to use c in a note to go back to crotchets.
+            elif word=="KeepLength":
                 notehead_markup.keepLength=1
             elif word=="NoBarNums":
                 if notehead_markup.noBarNums: sys.stderr.write("WARNING: Duplicate NoBarNums, did you miss out a NextScore?\n")
@@ -1617,13 +1761,13 @@ def getLY(score,headers=None,have_final_barline=True):
                (3,"","2."), # 3 crotchets = dotted minim
                (2,r"\.","2."), # in 6/8, 2 dotted crotchets = dotted minim
                (2,"","2")]: # 2 crotchets = minim
-           out = re.sub("(?P<note>[^<][^ ]*|<[^>]*>)4"+dot+r"((?::32)?) +~(( \\[^ ]+)*) "+" +~ ".join(["(?P=note)4"+dot]*(numNotes-1)),r"\g<1>"+result+r"\g<2>\g<3>",out)
+           out = re.sub("(?P<note>[^<][^ ]*|<[^>]*>)4"+dot+r'((?::32)?) +~(( \\[^ ]+| [_^]"[^"]*")*) '+" +~ ".join(["(?P=note)4"+dot]*(numNotes-1)),r"\g<1>"+result+r"\g<2>\g<3>",out)
+           out = re.sub("r4"+dot+r'(( \\[^ ]+| [_^]"[^"]*")*) '+" ".join(["r4"+dot]*(numNotes-1)),"r"+result+r"\g<1>",out)
            if dot: chkLen=6
            else: chkLen = 4
            out = re.sub(r"\\repeat tremolo "+str(chkLen)+r" { (?P<note1>[^ ]+)32 (?P<note2>[^ ]+)32 } +~(( \\[^ ]+)*) "+" +~ ".join(["< (?P=note1) (?P=note2) >4"+dot]*(numNotes-1)),r"\\repeat tremolo "+str(chkLen*numNotes)+r" { \g<1>32 \g<2>32 }\g<3>",out)
-           out = out.replace(" ".join(["r4"+dot]*numNotes),"r"+result)
        out = re.sub(r"(\\repeat tremolo [^{]+{ [^ ]+)( [^}]+ })(( +\\[^b][^ ]*)+)",r"\g<1>\g<3>\g<2>",out) # dynamics need to attach inside the tremolo (but \bar doesn't)
-       out = re.sub(r"(%\{ bar [0-9]*: %\} | \\major ) *r(?=[^ ]* [| ]* (?:\\noPageBreak )?%\{ bar|\\bar)",r"\g<1>R",out)
+       out = re.sub(r'(%\{ bar [0-9]*: %\} | \\major ) *r(?=[^ ]*(?: [_^]"[^"]*")?[| ]* (?:\\noPageBreak )?(?:%\{ bar|\\bar|\}$))',r"\g<1>R",out)
        out = out.replace(r"\new RhythmicStaff \with {",r"\new RhythmicStaff \with { \override VerticalAxisGroup.default-staff-staff-spacing = #'((basic-distance . 6) (minimum-distance . 6) (stretchability . 0)) ") # don't let it hang too far up in the air
    if not_angka: out=out.replace("make-bold-markup","make-simple-markup")
    return out,maxBeams,lyrics,headers
@@ -1646,7 +1790,7 @@ def process_input(inDat):
   for midi in [False,True]:
    not_angka = False # may be set by getLY
    if scoreNo==1 and not midi: ret.append(all_scores_start(inDat)) # now we've established non-empty
-   separate_score_per_part = midi and re.search(r"\sPartMidi\s"," "+score+" ") and len(parts)>1 # TODO: document this (results in 1st MIDI file containing all parts, then each MIDI file containing one part, if there's more than 1 part)
+   separate_score_per_part = midi and re.search(r"\sPartMidi\s"," "+score+" ") and len(parts)>1 # (results in 1st MIDI file containing all parts, then each MIDI file containing one part, if there's more than 1 part)
    for separate_scores in [False,True] if separate_score_per_part else [False]:
     headers = {} # will accumulate below
     for partNo,part in enumerate(parts):
@@ -1677,6 +1821,8 @@ def process_input(inDat):
        if notehead_markup.withStaff:
            western=True
            staffStart,voiceName = western_staff_start(inst)
+           average_octave = sum(notehead_markup.octavesSeen)*1.0/len(notehead_markup.octavesSeen)
+           if average_octave < -0.5: staffStart += r" \clef bass" # might want to say <0 but being conservative for now
            ret.append(staffStart+" "+getLY(part,have_final_barline=False)[0]+" "+western_staff_end())
            western = False
        if lyrics: ret.append("".join(lyrics_start(voiceName)+l+" "+lyrics_end()+" " for l in lyrics))
@@ -1744,7 +1890,7 @@ For Unicode approximation on this system, please do one of these things:
             elif sys.platform.startswith('win'):
                 import subprocess
                 subprocess.Popen([quote(pdf)],shell=True)
-            elif hasattr(shutil,'which') and shutil.which('evince'): os.system("evince "+quote(pdf))
+            elif (shutil.which('evince') if hasattr(shutil,'which') else os.path.exists('/usr/bin/evince')): os.system("evince "+quote(pdf))
         os.chdir(cwd) ; return
     fix_utf8(sys.stdout,'w').write(outDat)
 
