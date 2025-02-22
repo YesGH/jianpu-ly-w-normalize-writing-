@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # (can be run with either Python 2 or Python 3)
-## pre-process file to old format and remain the LP blocks.(v1.838.1)
+## (v1.838.3) 22F25 pre-process file to old format and remain the LP blocks. support connec t [()~^_-\] Exect -- with [^_] and [()~] with [-\]
 
 r"""
 # Jianpu (numbered musical notaion) for Lilypond
@@ -1008,8 +1008,9 @@ def process_text(line): ## remain LP block, add space after note
         placeholder_index += 1
         return result
     line = re.sub(r"LP:.*?:LP", replace_lp, line)
-    line = re.sub(r"([0-9x.,'cqsdh\\#b-]+)([()][()]\s|[_^][^\s])", r"\1 \2", line)  ## add space
-    line = re.sub(r"([0-9x.,'cqsdh()\\#b-]+)([()~]\s|[\\][A-Za-z])", r"\1 \2", line)
+    line = re.sub(r"([0-9,')])(-{3}\s])", r"\1 \2", line)  ## add space for ---
+    line = re.sub(r"([0-9x.,'cqsdh()\\#b-]+)(-{2}\s|[_^][^\s])", r"\1 \2", line)  ## ^_ can't follow --
+    line = re.sub(r"([0-9x.,'cqsdh()\\#b-]+)([()~-]\s|[\\][A-Za-z])", r"\1 \2", line) ## \- can't follow ()~ 
     for i, lp_section in enumerate(lp_sections):
        line = line.replace(placeholder.format(i), lp_section) ## LP back
     return line
@@ -1024,7 +1025,7 @@ def merge_lines(score): ##de-comment%
         line = line.strip()
         if line:
             processed_lines.append(line)
-            print(line)
+            #print(line)
     line  = ' '.join(processed_lines)
     result = process_text(line) ##
     return result
