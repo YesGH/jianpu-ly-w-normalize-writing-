@@ -251,17 +251,22 @@ jianpuGraceCurveEnd =
 %text format: 838.3
 title=痴情冢
 subtitle=电视剧《新天龙八部》主题曲
-poet=抄谱:ye838.3
+poet=抄谱:ye838.4
 composer= 林海 曲 沈永峰词
 arranger= 成鎂甄课件
 
-1=F
-4/4
+1=F 4/4
 4=84
 %WithStaff
 NoIndent
 
-6 q1' 3'q 2' 1'q 7q | 6q. 7s 6q 5q 3 3q 5q | 6 1' 7 5 | 6 - - - ~ | 6 - - - \break R{ 6, 1q ( 3q ) 2 1q ( 7,q ) | 6,q. ( 7,s ) 6,q ( 5,q ) 3, - | 0q 6,q 7,q 1q 7, 6,q 5,q ~ | 5,q 6,q ~ 6, - - \break 6, 1q ( 3q ) 2 1q ( 2q ) | 3 5q ( 3q ) 3 - | 0q 6,q 7,q 1q 7, 6,q 5,q ~ | 5,q 6,q ~ 6, - - | \break 6 5q ( 6q ) 3 2q ( 1q ) | 2 2q ( 3q ) 6, - | 2q 3q 1q 6,q 2 3q ( 5q ) | 3 - - - | \break 6 5q ( 6q ) 3 2q ( 1q )  2 2q ( 3q ) 6, -  2q 3q 1q 6,q 5, 3,q ( 5,q ) } A{ 6, - - 0  0 0 0 0 | 6, - 0 -  6 5q ( 6q ) 3 2q ( 1q )  2 2q ( 3q ) 6, - 2q 3q 1q 6,q 2 3q ( 5q )  3 - - - }  \break 6 5q ( 6q ) 3 2q ( 1q )  2 2q ( 3q ) 6, -  2q 3q 1q 6,q 5, 3,q ( 5,q )  5,q 6,q ~ 6, - - |
+
+LP:\override Score.BarNumber.stencil = #(make-stencil-boxer 0.1 0.25 ly:text-interface::print)
+:LP
+ 6 q1' 3'q 2' 1'q 7q | 6q. 7s 6q 5q 3 3q 5q | 6 1' 7 5 | 6 - - - ~ | 6 - - - 
+LP: \bar "||" 
+:LP
+ \break R{ 6, 1q ( 3q ) 2 1q ( 7,q ) | 6,q. ( 7,s ) 6,q ( 5,q ) 3, - | 0q 6,q 7,q 1q 7, 6,q 5,q ~ | 5,q 6,q ~ 6, - - \break 6, 1q ( 3q ) 2 1q ( 2q ) | 3 5q ( 3q ) 3 - | 0q 6,q 7,q 1q 7, 6,q 5,q ~ | 5,q 6,q ~ 6, - - | \break 6 5q ( 6q ) 3 2q ( 1q ) | 2 2q ( 3q ) 6, - | 2q 3q 1q 6,q 2 3q ( 5q ) | 3 - - - | \break 6 5q ( 6q ) 3 2q ( 1q )  2 2q ( 3q ) 6, -  2q 3q 1q 6,q 5, 3,q ( 5,q ) }  A{ 6, - - 0  0 - - - | 6, - 0 -  6 5q ( 6q ) 3 2q ( 1q )  2 2q ( 3q ) 6, - 2q 3q 1q 6,q 2 3q ( 5q )  3 - - - }  \break 6 5q ( 6q ) 3 2q ( 1q )  2 2q ( 3q ) 6, -  2q 3q 1q 6,q 5, 3,q ( 5,q )  5,q 6,q ~ 6, - - |
 
 H: \repeat unfold 17 { \skip 1 } 1. 眼里柔情都是你，爱里落花水漂零， 梦里牵手都是你，命里纠结无处醒。 今生君恩还不尽，愿有来生化春泥， 雁过无痕风有情，生死两忘江湖里。
 
@@ -307,7 +312,8 @@ H: \repeat unfold 17 { \skip 1 } 2. 人前笑语花相映，人后哭泣倩人�
 
     \override Staff.TimeSignature.style = #'numbered
     \override Staff.Stem.transparent = ##t
-     \mark \markup{1=F} \time 4/4 \tempo 4=84  \note-mod "6" a4 \set stemLeftBeamCount = #0
+     \mark \markup{1=F} \time 4/4 \tempo 4=84 \override Score.BarNumber.stencil = #(make-stencil-boxer 0.1 0.25 ly:text-interface::print)
+ \note-mod "6" a4 \set stemLeftBeamCount = #0
 \set stemRightBeamCount = #1
  \note-mod "1" c8^.[
 \set stemLeftBeamCount = #1
@@ -347,7 +353,8 @@ H: \repeat unfold 17 { \skip 1 } 2. 人前笑语花相映，人后哭泣倩人�
  \note-mod "6" a4
  ~ \=JianpuTie) \once \override Tie.transparent = ##t \once \override Tie.staff-position = #0  \note-mod "–" a4
  ~ \once \override Tie.transparent = ##t \once \override Tie.staff-position = #0  \note-mod "–" a4
- ~  \note-mod "–" a4 \break \repeat volta 2 { | %{ bar 6: %}
+ ~  \note-mod "–" a4  \bar "||"
+\break \repeat volta 2 { | %{ bar 6: %}
  \note-mod "6" a4-\tweak #'Y-offset #-1.2 -\tweak #'X-offset #0.6 _. 
 \set stemLeftBeamCount = #0
 \set stemRightBeamCount = #1
@@ -543,7 +550,7 @@ H: \repeat unfold 17 { \skip 1 } 2. 人前笑语花相映，人后哭泣倩人�
  ~ \once \override Tie.transparent = ##t \once \override Tie.staff-position = #0  \note-mod "–" a4
  ~  \note-mod "–" a4  \note-mod "0" r4 | %{ bar 22: %}
  \note-mod "0" r4
- \note-mod "0" r4  \note-mod "0" r4  \note-mod "0" r4 } { \once \override Tie.transparent = ##t \once \override Tie.staff-position = #0 | %{ bar 23: %}
+ \note-mod "–" r4  \note-mod "–" r4  \note-mod "–" r4 } { \once \override Tie.transparent = ##t \once \override Tie.staff-position = #0 | %{ bar 23: %}
  \note-mod "6" a4-\tweak #'Y-offset #-1.2 -\tweak #'X-offset #0.6 _. 
  ~  \note-mod "–" a4  \note-mod "0" r4  \note-mod "–" r4 | %{ bar 24: %}
  \note-mod "6" a4
@@ -648,7 +655,7 @@ H: \repeat unfold 17 { \skip 1 } 2. 人前笑语花相映，人后哭泣倩人�
 \header{
 title="痴情冢"
 subtitle="电视剧《新天龙八部》主题曲"
-poet="抄谱:ye838.3"
+poet="抄谱:ye838.4"
 composer="林海 曲 沈永峰词"
 arranger="成鎂甄课件"
 }
@@ -663,14 +670,16 @@ arranger="成鎂甄课件"
 << 
 
 % === BEGIN MIDI STAFF ===
-    \new Staff { \new Voice="b" { \transpose c f { \key c \major  \time 4/4 \tempo 4=84 a'4 c''8 e''8 d''4 c''8 b'8 | | %{ bar 2: %} a'8. b'16 a'8 g'8 e'4 e'8 g'8 | | %{ bar 3: %} a'4 c''4 b'4 g'4 | | %{ bar 4: %} a'1 ~ | | %{ bar 5: %} a'1 \break \repeat volta 2 { | %{ bar 6: %} a4 c'8 ( e'8 ) d'4 c'8 ( b8 ) | | %{ bar 7: %} a8. ( b16 ) a8 ( g8 ) e2 | | %{ bar 8: %} r8 a8 b8 c'8 b4 a8 g8 ~ | | %{ bar 9: %} g8 a8 ~ a2. \break | %{ bar 10: %} a4 c'8 ( e'8 ) d'4 c'8 ( d'8 ) | | %{ bar 11: %} e'4 g'8 ( e'8 ) e'2 | | %{ bar 12: %} r8 a8 b8 c'8 b4 a8 g8 ~ | | %{ bar 13: %} g8 a8 ~ a2. | \break | %{ bar 14: %} a'4 g'8 ( a'8 ) e'4 d'8 ( c'8 ) | | %{ bar 15: %} d'4 d'8 ( e'8 ) a2 | | %{ bar 16: %} d'8 e'8 c'8 a8 d'4 e'8 ( g'8 ) | | %{ bar 17: %} e'1 | \break | %{ bar 18: %} a'4 g'8 ( a'8 ) e'4 d'8 ( c'8 ) | %{ bar 19: %} d'4 d'8 ( e'8 ) a2 | %{ bar 20: %} d'8 e'8 c'8 a8 g4 e8 ( g8 ) } \alternative { { | %{ bar 21: %} a2. r4 | %{ bar 22: %} r1 } { | %{ bar 23: %} a2 r2 | %{ bar 24: %} a'4 g'8 ( a'8 ) e'4 d'8 ( c'8 ) | %{ bar 25: %} d'4 d'8 ( e'8 ) a2 | %{ bar 26: %} d'8 e'8 c'8 a8 d'4 e'8 ( g'8 ) | %{ bar 27: %} e'1 }} \break | %{ bar 28: %} a'4 g'8 ( a'8 ) e'4 d'8 ( c'8 ) | %{ bar 29: %} d'4 d'8 ( e'8 ) a2 | %{ bar 30: %} d'8 e'8 c'8 a8 g4 e8 ( g8 ) | %{ bar 31: %} g8 a8 ~ a2. | } } }
+    \new Staff { \new Voice="b" { \transpose c f { \key c \major  \time 4/4 \tempo 4=84 \override Score.BarNumber.stencil = #(make-stencil-boxer 0.1 0.25 ly:text-interface::print)
+a'4 c''8 e''8 d''4 c''8 b'8 | | %{ bar 2: %} a'8. b'16 a'8 g'8 e'4 e'8 g'8 | | %{ bar 3: %} a'4 c''4 b'4 g'4 | | %{ bar 4: %} a'1 ~ | | %{ bar 5: %} a'1  \bar "||"
+\break \repeat volta 2 { | %{ bar 6: %} a4 c'8 ( e'8 ) d'4 c'8 ( b8 ) | | %{ bar 7: %} a8. ( b16 ) a8 ( g8 ) e2 | | %{ bar 8: %} r8 a8 b8 c'8 b4 a8 g8 ~ | | %{ bar 9: %} g8 a8 ~ a2. \break | %{ bar 10: %} a4 c'8 ( e'8 ) d'4 c'8 ( d'8 ) | | %{ bar 11: %} e'4 g'8 ( e'8 ) e'2 | | %{ bar 12: %} r8 a8 b8 c'8 b4 a8 g8 ~ | | %{ bar 13: %} g8 a8 ~ a2. | \break | %{ bar 14: %} a'4 g'8 ( a'8 ) e'4 d'8 ( c'8 ) | | %{ bar 15: %} d'4 d'8 ( e'8 ) a2 | | %{ bar 16: %} d'8 e'8 c'8 a8 d'4 e'8 ( g'8 ) | | %{ bar 17: %} e'1 | \break | %{ bar 18: %} a'4 g'8 ( a'8 ) e'4 d'8 ( c'8 ) | %{ bar 19: %} d'4 d'8 ( e'8 ) a2 | %{ bar 20: %} d'8 e'8 c'8 a8 g4 e8 ( g8 ) } \alternative { { | %{ bar 21: %} a2. r4 | %{ bar 22: %} r1 } { | %{ bar 23: %} a2 r2 | %{ bar 24: %} a'4 g'8 ( a'8 ) e'4 d'8 ( c'8 ) | %{ bar 25: %} d'4 d'8 ( e'8 ) a2 | %{ bar 26: %} d'8 e'8 c'8 a8 d'4 e'8 ( g'8 ) | %{ bar 27: %} e'1 }} \break | %{ bar 28: %} a'4 g'8 ( a'8 ) e'4 d'8 ( c'8 ) | %{ bar 29: %} d'4 d'8 ( e'8 ) a2 | %{ bar 30: %} d'8 e'8 c'8 a8 g4 e8 ( g8 ) | %{ bar 31: %} g8 a8 ~ a2. | } } }
 % === END MIDI STAFF ===
 
 >>
 \header{
 title="痴情冢"
 subtitle="电视剧《新天龙八部》主题曲"
-poet="抄谱:ye838.3"
+poet="抄谱:ye838.4"
 composer="林海 曲 沈永峰词"
 arranger="成鎂甄课件"
 }

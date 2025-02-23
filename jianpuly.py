@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # (can be run with either Python 2 or Python 3)
-## (v1.838.3) 22F25 pre-process file to old format and remain the LP blocks. support connec t [()~^_-\] Exect -- with [^_] and [()~] with [-\]
+## (v1.838.4) 22F25 pre-process file to old format and remain the LP blocks. support connec t [()~^_-\] Exect -- with [^_] and [()~] with [-\]
 
 r"""
 # Jianpu (numbered musical notaion) for Lilypond
@@ -1003,8 +1003,9 @@ def process_text(line): ## remain LP block, add space after note
 
     def replace_lp(match):
         nonlocal placeholder_index
-        lp_sections.append(match.group(0)) #remain the sign LP
+        lp_sections.append(match.group(0)[3:-3]) #de the sign LP
         result = placeholder.format(placeholder_index)
+        result = "\nLP:"+result+"\n:LP\n" #start and end with LP
         placeholder_index += 1
         return result
     line = re.sub(r"LP:.*?:LP", replace_lp, line)
@@ -1902,6 +1903,7 @@ def main():
     if '--version' in sys.argv or '-v' in sys.argv or '/v' in sys.argv: return write_version()
     inDat = get_input()
     inDat = pre_process_input(inDat) ## 
+    #print(inDat)
     out = process_input(inDat) # <-- you can also call this if importing as a module
     write_output(out)
 

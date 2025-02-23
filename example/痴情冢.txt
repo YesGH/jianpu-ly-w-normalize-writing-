@@ -1,23 +1,23 @@
 %text format: 838.3
 title=痴情冢
 subtitle=电视剧《新天龙八部》主题曲
-poet=抄谱:ye838.3
+poet=抄谱:ye838.4
 composer= 林海 曲 沈永峰词
 arranger= 成鎂甄课件
 
-1=F
-4/4
+1=F 4/4
 4=84
 %WithStaff
 NoIndent
 
-M:6 q1' 3'q 2' 1'q 7q | 6q. 7s 6q 5q 3 3q 5q | 6 1' 7 5 | 6--- ~ | 6--- \break %| 05 
+M:LP:\override Score.BarNumber.stencil = #(make-stencil-boxer 0.1 0.25 ly:text-interface::print):LP
+6 q1' 3'q 2' 1'q 7q | 6q. 7s 6q 5q 3 3q 5q | 6 1' 7 5 | 6--- ~ | 6--- LP: \bar "||" :LP \break %| 05 
 R{ 6, 1q ( 3q) 2 1q( 7,q) | 6,q.( 7,s) 6,q( 5,q) 3,- | 0q 6,q 7,q 1q 7, 6,q 5,q~ | 5,q 6,q~ 6,-- \break %| 09 
 6, 1q( 3q) 2 1q( 2q) | 3 5q( 3q) 3 - | 0q 6,q 7,q 1q 7, 6,q 5,q~ | 5,q 6,q~ 6,-- | \break %13 
 6 5q( 6q) 3 2q( 1q) | 2 2q( 3q) 6,- | 2q 3q 1q 6,q 2 3q( 5q) | 3--- | \break %17 
-6 5q( 6q) 3 2q( 1q)  2 2q( 3q) 6,-  2q 3q 1q 6,q 5, 3,q( 5,q) } A{ 6,-- 0  0 0 0 0 |
+6 5q( 6q) 3 2q( 1q)  2 2q( 3q) 6,-  2q 3q 1q 6,q 5, 3,q( 5,q) }  A{ 6,-- 0  0--- |
 6,- 0-  6 5q( 6q) 3 2q( 1q)  2 2q( 3q) 6,- 2q 3q 1q 6,q 2 3q( 5q)  3--- }  \break %27 
-6 5q( 6q) 3 2q( 1q)  2 2q( 3q) 6,-  2q 3q 1q 6,q 5, 3,q( 5,q)  5,q 6,q~ 6,-- |  %31
+6 5q( 6q) 3 2q( 1q)  2 2q( 3q) 6,-  2q 3q 1q 6,q 5, 3,q( 5,q)  5,q 6,q~ 6,-- | %31
 
 H:
 \repeat unfold 17 { \skip 1 }
