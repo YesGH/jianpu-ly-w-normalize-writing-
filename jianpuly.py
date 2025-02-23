@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # (can be run with either Python 2 or Python 3)
-## (v1.838.4) 22F25 pre-process file to old format and remain the LP blocks. support connec t [()~^_-\] Exect -- with [^_] and [()~] with [-\]
+## (v1.838.4) 23F25 pre-process file to old format and remain the LP blocks. support connec t [()~^_-\] Exect -- with [^_] and [()~] with [-\]
 
 r"""
 # Jianpu (numbered musical notaion) for Lilypond
@@ -1903,7 +1903,6 @@ def main():
     if '--version' in sys.argv or '-v' in sys.argv or '/v' in sys.argv: return write_version()
     inDat = get_input()
     inDat = pre_process_input(inDat) ## 
-    #print(inDat)
     out = process_input(inDat) # <-- you can also call this if importing as a module
     write_output(out)
 
