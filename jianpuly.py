@@ -1,95 +1,11 @@
 #!/usr/bin/env python3
-# (can be run with either Python 2 or Python 3)
-## (v1.838.4) 23F25 pre-process file to old format and remain the LP blocks. support connec t [()~^_-\] Exect -- with [^_] and [()~] with [-\]
+## (v1.838.6) 7M25 pre-process file to old format and remain the LP blocks. support connect [()~^_-\] Exect -- with [^_] and [()~] with [\]
+## for python3 and lilypond-2.20. zathura for pdf.
 
 r"""
 # Jianpu (numbered musical notaion) for Lilypond
 # v1.838 (c) 2012-2025 Silas S. Brown
-# v1.826 (c) 2024 Unbored
 
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-# 
-#     http://www.apache.org/licenses/LICENSE-2.0
-# 
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
-# Homepage: http://ssb22.user.srcf.net/mwrhome/jianpu-ly.py
-# Git repository: https://github.com/ssb22/jianpu-ly
-# and on GitLab: https://gitlab.com/ssb22/jianpu-ly
-# and on Bitbucket: https://bitbucket.org/ssb22/jianpu-ly
-# and at https://gitlab.developers.cam.ac.uk/ssb22/jianpu-ly
-# and in China: https://gitee.com/ssb22/jianpu-ly
-
-# (The following docstring format is fixed, see --html)
-Run jianpu-ly < text-file > ly-file (or jianpu-ly text-files > ly-file).  There is experimental support for importing MusicXML via jianpu-ly piece.xml (or jianpu-ly piece.mxl > ly-file) but this does not work for all pieces.
-# (Currently, MusicXML import must use .mxl extension and not redirect)
-Normal text files are whitespace-separated and can contain words like the following.  Usually the order of characters within a note does not matter, hence #1 is the same as 1# and '1 is the same as 1' and s1 is the same as 1s.
-Scale going up: 1 2 3 4 5 6 7 1'
-Accidentals: 1 #1 2 b2 1
-Octaves: 1,, 1, 1 1' 1''
-Shortcuts for 1' and 2': 8 9
-Percussion beat: x
-Change base octave: < >
-Semiquaver, quaver, crotchet (16/8/4th notes): s1 q1 1
-Alternate way to input semiquaver, quaver, crotchet: 1\\ 1\ 1 (any \ must go after the pitch not before)
-Sticky durations (4 semiquavers then crotchet): KeepLength s1 1 1 1 c1
-Dotted versions of the above (50% longer): s1. q1. 1.
-Demisemiquaver, hemidemisemiquaver (32/64th notes): d1 h1
-Minims (half notes) use dashes: 1 -
-Dotted minim: 1 - -
-Semibreve (whole note): 1 - - -
-Time signature: 4/4
-Time signature with quaver anacrusis (8th-note pickup): 4/4,8
-Key signature (major): 1=Bb
-Key signature (minor): 6=F#
-Tempo: 4=85
-Lyrics: L: here are the syl- la- bles (all on one line, or newline after the : and double newline to end)
-Lyrics (verse 1): L: 1. Here is verse one
-Lyrics (verse 2): L: 2. Here is verse two
-Hanzi lyrics (auto space): H: hanzi (with or without spaces)
-Lilypond headers: title=the title (on a line of its own)
-Guitar chords: chords=c2. g:7 c (on own line, or newline after the = and double newline to end)
-Fret diagrams: frets=guitar (on own line)
-Multiple parts: NextPart
-Instrument of current part: instrument=Flute (on a line of its own)
-Multiple movements: NextScore
-Prohibit page breaks until end of this movement: OnePage
-Suppress bar numbers: NoBarNums
-Suppress first-line indent: NoIndent
-Ragged last line: RaggedLast
-Old-style time signature: SeparateTimesig 1=C 4/4
-Indonesian 'not angka' style: angka
-Alternate Indonesian-style minim, dotted minim and semibreve: 1 . 1 . . 1 . . . (dot is treated as dash)
-Add a Western staff doubling the tune: WithStaff
-Tuplets: 3[ q1 q1 q1 ]
-Grace notes before: g[#45] 1
-Grace notes after: 1 ['1]g
-Grace notes with durations: g[d4d5s6] 1
-Simple chords: ,13'5 1 1b3 1 (chord numbers are sorted automatically)
-Da capo: 1 1 Fine 1 1 1 1 1 1 DC
-Repeat (with alternate endings): R{ 1 1 1 } A{ 2 | 3 }
-Short repeats (percent): R4{ 1 2 }
-Ties (like Lilypond's, if you don't want dashes): 1 ~ 1
-Slurs (like Lilypond's): 1 ( 2 )
-Erhu fingering (applies to previous note): Fr=0 Fr=4
-Erhu symbol (applies to previous note): souyin harmonic up down bend tilde
-Tremolo: 1/// - 1///5 -
-Rehearsal letters: letterA letterB
-Multibar rest: R*8
-Dynamics (applies to previous note): \p \mp \f
-Other 1-word Lilypond \ commands: \fermata \> \! \( \) etc
-Text: ^"above note" _"below note"
-Harmonic symbols above main notes: Harm: (music) :Harm (main music)
-Other Lilypond code: LP: (block of code) :LP (each delimeter at start of its line)
-Unicode approximation instead of Lilypond: Unicode
-Split MIDI files per part: PartMidi
-Ignored: % a comment
 """
 
 import sys,os,re,shutil
@@ -163,7 +79,7 @@ def all_scores_start(inDat):
     r += r"""
 
 % un-comment the next line to remove Lilypond tagline:
-% \header { tagline="" }
+ \header { tagline="v1.838.6 2025" }
 
 % comment out the next line if you're debugging jianpu-ly
 % (but best leave it un-commented in production, since
@@ -187,14 +103,8 @@ def all_scores_start(inDat):
   % un-comment the next line for a more space-saving header layout:
   % scoreTitleMarkup = \markup { \center-column { \fill-line { \magnify #1.5 { \bold { \fromproperty #'header:dedication } } \magnify #1.5 { \bold { \fromproperty #'header:title } } \fromproperty #'header:composer } \fill-line { \fromproperty #'header:instrument \fromproperty #'header:subtitle \smaller{\fromproperty #'header:subsubtitle } } } }
 """
-    if os.path.exists("/Library/Fonts/Arial Unicode.ttf"): r += r"""
-  % As jianpu-ly was run on a Mac, we include a Mac fonts workaround.
-  % The Mac version of Lilypond 2.18 used Arial Unicode MS as a
-  % fallback even in the Serif font, but 2.20 drops this in Serif
-  % (using it only in Sans), which means any Serif text (titles,
-  % lyrics etc) that includes Chinese will likely fall back to
-  % Japanese fonts which don't support all Simplified hanzi.
-  % This brings back 2.18's behaviour on 2.20+:
+    r += r"""
+  % set fonts
   #(define fonts
     (set-global-fonts
      #:roman "Source Serif Pro,Source Han Serif SC,Times New Roman,Arial Unicode MS"
@@ -1009,9 +919,10 @@ def process_text(line): ## remain LP block, add space after note
         placeholder_index += 1
         return result
     line = re.sub(r"LP:.*?:LP", replace_lp, line)
+    line = re.sub(r"([-\"a-z])(~)", r"\1 \2", line) ## add space between ~ and -" \xxx
     line = re.sub(r"([0-9,')])(-{3}\s])", r"\1 \2", line)  ## add space for ---
-    line = re.sub(r"([0-9x.,'cqsdh()\\#b-]+)(-{2}\s|[_^][^\s])", r"\1 \2", line)  ## ^_ can't follow --
-    line = re.sub(r"([0-9x.,'cqsdh()\\#b-]+)([()~-]\s|[\\][A-Za-z])", r"\1 \2", line) ## \- can't follow ()~ 
+    line = re.sub(r"([0-9x.,'cqsdh()\\#b-]+)(-{2}\s|[_^][^\s])", r"\1 \2", line)  ##  -- can't followed by ^_
+    line = re.sub(r"([0-9x.,'cqsdh()\\#b-]+)([()~-]\s|[\\][A-Za-z])", r"\1 \2", line) ##  ()~ can't follow by \- 
     for i, lp_section in enumerate(lp_sections):
        line = line.replace(placeholder.format(i), lp_section) ## LP back
     return line
@@ -1468,10 +1379,7 @@ def getLY(score,headers=None,have_final_barline=True):
    aftrnext2 = None
    isInHarmonic = False
    # Please be careful adding extra re.sub's here: they will apply
-   # to the WHOLE SCORE, including Lilypond blocks, headers, etc.
-   # See comment below for a place where you can add re.sub's that
-   # apply just to the jianpu parts after we've already dealt with
-   # Lilypond blocks, headers and lyrics.
+   # to the WHOLE SCORE
    score = re.sub("(?s)(^|\n)(L:|H:|chords=)\n(.*?)(\n\n|$)",lambda m:"\n"+" ".join(m.group().split())+"\n",score) # this one DOES apply to lyrics etc: if newline immediately after, collapse until next double newline
    for line in score.split("\n"):
     line = fix_fullwidth(line).strip()
@@ -1531,9 +1439,6 @@ def getLY(score,headers=None,have_final_barline=True):
         # lyrics line, or Lilypond code.  This is a good place to
         # put any regex replacements we want to apply only to the
         # jianpu parts of the input before we split into words.
-        # First, merge multiple grace notes.  This is needed for the
-        # output of some MusicXML conversions, and might be useful to
-        # have around anyway:
         line=re.sub(r"(?<=\s)(g\[[#b',1-9qsdh]+\]\s*)+g\[([#b',1-9qsdh]+)\](?=\s)",lambda m:re.sub(r"\]\s*g\[","",m.group()),line)
         # To support multi-word text above/below the stave, we'll
         # replace space with chr(0) inside quoted strings so they
@@ -1542,18 +1447,7 @@ def getLY(score,headers=None,have_final_barline=True):
         line=re.sub('(?<= )[_^]"[^" ]* [^"]*"(?= |$)',lambda m:m.group().replace(' ',chr(0))," "+line)[1:]
         # and YesGH's suggestion: allow slurs and ties to be attached
         # to the right-hand side of the notes to which they apply
-        # (i.e. auto insert the space if there's not one already).
-        # Not yet doing this with \ Lilypond commands, because
-        # currently \ can indicate a duration if used anywhere other
-        # than the first character of a note, so it could be quite
-        # tricky to identify exactly when we can definitely say it's
-        # a Lilypond command and not a duration (but if your
-        # particular input doesn't use \ for duration then you could
-        # do the replacement in another tool before jianpu-ly).
-        # So currently you still need a space before \command, but
-        # don't need a space before ( or ) or ~ after the note
-        # (and more than one of these can be added to the same note)
-        # line=re.sub(r"((?:^|\s)"+note_regex+r")([()~]+)(?=\s|$)", lambda m:" ".join([m.group(1)]+list(m.group(2))), line)
+        ##line=re.sub(r"((?:^|\s)"+note_regex+r")([()~]+)(?=\s|$)", lambda m:" ".join([m.group(1)]+list(m.group(2))), line)
         for word in line.split():
             word=word.replace(chr(0)," ")
             if word in ["souyin","harmonic","up","down","bend","tilde"]: word="Fr="+word # (Fr= before these is optional)
@@ -1892,7 +1786,8 @@ For Unicode approximation on this system, please do one of these things:
             elif sys.platform.startswith('win'):
                 import subprocess
                 subprocess.Popen([quote(pdf)],shell=True)
-            elif (shutil.which('evince') if hasattr(shutil,'which') else os.path.exists('/usr/bin/evince')): os.system("evince "+quote(pdf))
+            ## elif (shutil.which('evince') if hasattr(shutil,'which') else os.path.exists('/usr/bin/evince')): os.system("evince "+quote(pdf))
+            elif (shutil.which('zathura') if hasattr(shutil,'which') else os.path.exists('/usr/bin/zathura')): os.system("zathura "+quote(pdf))
         os.chdir(cwd) ; return
     fix_utf8(sys.stdout,'w').write(outDat)
 
